@@ -29,6 +29,7 @@ import com.wonderhoylabs.akiyama.link.Link
 import com.wonderhoylabs.akiyama.link.LinkSession
 import com.wonderhoylabs.akiyama.link.Proto
 import com.wonderhoylabs.akiyama.link.TcpLink
+import com.wonderhoylabs.akiyama.link.tidyComputerName
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -69,10 +70,10 @@ class TunnelService : VpnService() {
             return Service.START_NOT_STICKY
         }
 
-        val computer = accessory?.description?.takeIf { it.isNotBlank() } ?: getString(R.string.the_computer)
+        val computer = tidyComputerName(accessory?.description)
         AkiyamaState.setError(null)
         AkiyamaState.setStatus(TunnelStatus.Connecting(computer))
-        goForeground(getString(R.string.status_connecting, computer))
+        goForeground(R.string.notification_connecting, computer)
         if (accessory != null) {
             ContextCompat.registerReceiver(
                 this,
@@ -102,7 +103,7 @@ class TunnelService : VpnService() {
         super.onDestroy()
     }
 
-    private fun runTunnel(accessory: UsbAccessory?, useAdb: Boolean, devTcp: String?, computer: String) {
+    private fun runTunnel(accessory: UsbAccessory?, useAdb: Boolean, devTcp: String?, computer: String?) {
         var reason: String? = null
         while (!stopping) {
             var opened: Link? = null
@@ -112,12 +113,12 @@ class TunnelService : VpnService() {
                 link = opened
                 current = LinkSession(opened.fd)
                 session = current
-                AkiyamaState.setStatus(TunnelStatus.Waiting(computer))
+                AkiyamaState.setStatus(TunnelStatus.Waiting(computer, useAdb))
                 val welcome = current.handshake()
                 if (stopping) break
                 val established = ensureTunnel(welcome)
                 AkiyamaState.setStatus(TunnelStatus.Connected(computer, current.stats))
-                goForeground(getString(R.string.status_connected, computer))
+                goForeground(R.string.notification_connected, computer)
                 val failure = current.run(
                     established.fileDescriptor,
                     resolver ?: throw IOException("The resolver went away."),
@@ -144,7 +145,7 @@ class TunnelService : VpnService() {
             if (accessory != null && !stillAttached(accessory)) break
             Log.i(TAG, "link ended: $reason")
             AkiyamaState.setStatus(TunnelStatus.Reconnecting(computer, reason))
-            goForeground(getString(R.string.status_reconnecting, computer))
+            goForeground(R.string.notification_reconnecting, computer)
             try {
                 Thread.sleep(RETRY_MILLIS)
             } catch (_: InterruptedException) {
@@ -243,14 +244,14 @@ class TunnelService : VpnService() {
         stopSelf()
     }
 
-    private fun goForeground(text: String) {
+    private fun goForeground(text: Int, computer: String?) {
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,
             statusNotification(
                 this,
-                text,
-                getString(R.string.notification_disconnect),
+                getString(text, computer ?: getString(R.string.the_computer)),
+                getString(R.string.disconnect),
                 Intent(this, TunnelService::class.java).setAction(ACTION_STOP),
             ),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,

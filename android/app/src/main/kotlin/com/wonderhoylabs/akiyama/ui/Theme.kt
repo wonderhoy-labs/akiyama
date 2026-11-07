@@ -51,9 +51,9 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun AkiyamaTheme(content: @Composable () -> Unit) {
+fun AkiyamaTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = Typography(),
         content = content,
     )

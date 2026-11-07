@@ -4,12 +4,14 @@ use crate::{ProbeArgs, aoa};
 use akiyama_core::checksum;
 use akiyama_core::dns::build_udp;
 use akiyama_core::proto::{RESOLVER_V4, Welcome};
-use akiyama_core::session::{Stats, pump};
-use anyhow::{Result, bail};
+use akiyama_core::session::{Stats, client_handshake, pump};
+use anyhow::{Context, Result, bail};
 use bytes::Bytes;
 use std::net::Ipv4Addr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 
@@ -17,10 +19,33 @@ const REPLY_TIMEOUT: Duration = Duration::from_secs(5);
 const PING_ID: u16 = 0x414b;
 
 pub async fn run(args: ProbeArgs) -> Result<()> {
-    println!("Looking for a phone. If one's plugged in, tap Share in the Akiyama app");
     let started = Instant::now();
+    if let Some(address) = &args.dev_tcp {
+        let stream = TcpStream::connect(address).await.with_context(|| format!("couldn't connect to {address}"))?;
+        stream.set_nodelay(true)?;
+        let (mut reader, mut writer) = stream.into_split();
+        let welcome = client_handshake(&mut reader, &mut writer).await.context("the handshake failed")?;
+        return check(reader, writer, address, welcome, args.count, started).await;
+    }
+    println!("Looking for a phone. If one's plugged in, tap Share in the Akiyama app");
     let (accessory, phone, welcome) = aoa::connect_to_phone(args.serial.as_deref(), true).await?;
-    let aoa::Accessory { mut reader, mut writer } = accessory;
+    let aoa::Accessory { reader, writer } = accessory;
+    check(reader, writer, &phone, welcome, args.count, started).await
+}
+
+/// Pings the far end and asks it for a DNS answer, over a link that's already said hello.
+async fn check<R, W>(
+    mut reader: R,
+    mut writer: W,
+    phone: &str,
+    welcome: Welcome,
+    count: u32,
+    started: Instant,
+) -> Result<()>
+where
+    R: AsyncRead + Unpin + Send + 'static,
+    W: AsyncWrite + Unpin + Send + 'static,
+{
     println!("Connected to {phone} in {:.1} s", started.elapsed().as_secs_f32());
     println!("Address {}, DNS through {}, MTU {}", welcome.client_v4, welcome.upstream_dns, welcome.mtu);
 
@@ -36,7 +61,7 @@ pub async fn run(args: ProbeArgs) -> Result<()> {
     });
 
     let mut times = Vec::new();
-    for sequence in 0..args.count as u16 {
+    for sequence in 0..count as u16 {
         let sent = Instant::now();
         to_link.send(gateway_ping(&welcome, sequence)).await?;
         let reply =
@@ -55,7 +80,7 @@ pub async fn run(args: ProbeArgs) -> Result<()> {
         bail!("the phone never answered a ping, so the link isn't carrying traffic");
     }
     let average = times.iter().sum::<f32>() / times.len() as f32;
-    println!("Answered {} of {} pings, averaging {average:.1} ms", times.len(), args.count);
+    println!("Answered {} of {count} pings, averaging {average:.1} ms", times.len());
 
     // A real lookup, sent the way a client's resolver sends one. Getting an answer shows the phone's
     // internet connection works too.

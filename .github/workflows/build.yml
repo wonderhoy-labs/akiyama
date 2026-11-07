@@ -95,7 +95,7 @@ jobs:
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
             export AKIYAMA_KEYSTORE="$RUNNER_TEMP/release.keystore"
           fi
-          ./gradlew :app:testDebugUnitTest :app:lintRelease :app:assembleRelease --no-daemon
+          ./gradlew :app:testDebugUnitTest :app:assembleDebugAndroidTest :app:lintRelease :app:assembleRelease --no-daemon
       - name: Rename the APK
         run: cp android/app/build/outputs/apk/release/app-release.apk akiyama.apk
       - uses: actions/upload-artifact@v4

@@ -109,6 +109,10 @@ pub struct ProbeArgs {
     /// How many pings to send
     #[arg(long, default_value_t = 5)]
     count: u32,
+
+    /// Connect over TCP instead of USB, to a debug build of the app. For development
+    #[arg(long, value_name = "ADDRESS", hide = true)]
+    dev_tcp: Option<String>,
 }
 
 #[tokio::main]

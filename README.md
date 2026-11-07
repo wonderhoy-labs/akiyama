@@ -29,7 +29,7 @@ akiyama server
 Then plug the phone in with a USB-C cable and allow Akiyama when it asks. Everything on the phone now goes over the cable to
 the laptop and out through its Wi-Fi. There's no root on the phone, no USB debugging and no setup on the laptop's network.
 
-![Akiyama on a Pixel, using a computer's network](docs/screenshot.webp)
+![The Akiyama app, on a phone in airplane mode, using a computer's internet](docs/screenshot.webp)
 
 > **This is early, and neither Linux nor Windows has ever been connected to a phone.** Their builds compile, but all our
 > testing was one Pixel 10 Pro on Android 17 with one Mac on macOS 27. [Here's exactly what that covers.](#what-has-been-tested)
@@ -114,8 +114,8 @@ Then connect:
 sudo akiyama client
 ```
 
-The phone asks whether to share with this computer, and nothing happens until you tap **Share my network**. There's no VPN
-involved on the phone, and it doesn't need root.
+The phone asks whether to share its internet, and nothing happens until you tap **Share**. There's no VPN involved on the
+phone, and it doesn't need root.
 
 The computer creates a TUN device, sends all of its traffic into it and points DNS at it. It all goes back to normal when
 `akiyama` exits. To use a TUN device of your own and handle routing yourself, name it. On macOS, the name has to be `utun`
@@ -136,8 +136,8 @@ Plug in the phone with USB debugging turned on, and run this:
 akiyama server
 ```
 
-It finds `adb`, sets up a tunnel through it and opens the app, where you tap **Use USB debugging instead**. Windows has no
-client, so to go the other way, use USB tethering in Android's own settings.
+It finds `adb`, sets up a tunnel through it and opens the app. There, tap **Windows, or using USB debugging**, then **Connect
+with USB debugging**. Windows has no client, so to go the other way, use USB tethering in Android's own settings.
 
 ### Switching directions
 
@@ -160,7 +160,8 @@ Akiyama with USB swapped out.
 | `akiyama server --adb` | Works on the Mac, with DNS through the tunnel. This is the link Windows uses |
 | **Anything on Linux with a phone** | **Never run.** The tool starts on Arch, but it hasn't been connected to anything |
 | **Anything on Windows** | **Never run.** It only builds |
-| **An Android phone with no other network** | **Not tried.** The phone had Wi-Fi during testing |
+| An Android phone with no other network | Works on an emulator with airplane mode on and Wi-Fi and mobile data off, using `--adb`. Ping, DNS and HTTP work, and Android calls the VPN validated. **Not tried on a real phone** |
+| The app's screen, in light and dark | An automated test draws every state on an emulator, and we've looked at each one. Real flows ran there too, over the development TCP link |
 | **Intel Macs, ARM Linux, ARM Windows, and x86_64 or 32-bit ARM Android** | **Built, never run** |
 | **Android older than 17** | **Not tried.** The app's written for Android 8 and newer |
 | **A sleeping phone, and battery drain** | **Not tried** |
@@ -233,12 +234,16 @@ TCP/IP stack, so that part is the Rust code the command-line tool uses, built in
 Worth reading before you run a server.
 
 **A phone that's plugged in can use the server's network connection.** That includes its local network and anything listening
-on its own network addresses, unless you run `akiyama server --no-lan` or switch on **Keep it off my local network**. Clients
+on its own network addresses, unless you run `akiyama server --no-lan` or switch on **Keep the computer off my local network**. Clients
 can't reach the server's own loopback addresses, whatever you set. `akiyama server` serves any phone that plugs in and runs
 the app, unless you name one with `--serial`.
 
-**A computer can't take a phone's network without asking.** The phone only shares after a tap, and it tells you which computer
-it thinks it's talking to. That name comes from the computer, so it proves nothing.
+**A computer can't take a phone's network without asking.** The phone only shares after a tap, and it shows you the name the
+computer gave. That name comes from the computer, so it proves nothing.
+
+**USB debugging is less private than the normal link.** `akiyama server --adb` carries traffic through a named socket on the
+phone, and another app on the phone could listen on that name first. That's why the app only connects this way when you tap
+the button, and why nothing but Windows uses it by default.
 
 **Akiyama adds no encryption.** It's a cable between two devices you can see, and it's no more private than that. Past the
 server, your traffic is as exposed as on any other connection through that server, and the server's owner can see what isn't
@@ -337,6 +342,12 @@ cargo build --release -p akiyama
 cd android && ./gradlew :app:testDebugUnitTest :app:assembleRelease
 ```
 
+With an emulator running, this draws every state of the app's screen and checks what it says and what its buttons do:
+
+```bash
+cd android && ./gradlew :app:connectedDebugAndroidTest
+```
+
 Adding `-Pakiyama.abis=arm64-v8a` builds the app faster, for one kind of device. The APK ends up at
 `android/app/build/outputs/apk/release/app-release.apk`. It's signed with your debug key unless you set `AKIYAMA_KEYSTORE`,
 `AKIYAMA_KEYSTORE_PASSWORD`, `AKIYAMA_KEY_ALIAS` and `AKIYAMA_KEY_PASSWORD`.
@@ -360,16 +371,35 @@ key and has to be installed fresh instead of updating.
 <details>
 <summary>Testing without a cable</summary>
 
-For everything above USB, both ends can use TCP instead. On the computer:
+An emulator has no USB accessory, but for everything above USB, both ends can use TCP instead. These need a debug build. On
+Android 17, an emulator also needs the local network permission to reach the computer:
+
+```bash
+adb shell pm grant com.wonderhoylabs.akiyama android.permission.ACCESS_LOCAL_NETWORK
+```
+
+To test the phone's VPN, start a server and connect the app to it:
 
 ```bash
 akiyama -v server --dev-tcp 127.0.0.1:47474
 ```
 
-On an emulator, with a debug build, this connects its VPN to that server:
-
 ```bash
 adb shell am start -n com.wonderhoylabs.akiyama/.ui.MainActivity --es dev_tcp 10.0.2.2:47474
+```
+
+To test sharing the phone's network, have the app listen, forward a port to it, and probe it:
+
+```bash
+adb shell am start -n com.wonderhoylabs.akiyama/.ui.MainActivity --ei dev_tcp_listen 47475
+```
+
+```bash
+adb forward tcp:47475 tcp:47475
+```
+
+```bash
+akiyama probe --dev-tcp 127.0.0.1:47475
 ```
 
 </details>
