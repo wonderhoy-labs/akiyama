@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Akiyama</string>
+    <string name="tagline">Networking over USB</string>
+
+    <string name="status_idle">Not connected</string>
+    <string name="status_plug_in">Plug this phone into a computer running <b>akiyama server</b>, and it connects by itself.</string>
+    <string name="status_connecting">Connecting to %1$s</string>
+    <string name="status_waiting">Waiting for <b>akiyama server</b> on %1$s</string>
+    <string name="status_connected">Connected to %1$s</string>
+    <string name="status_reconnecting">Link lost. Reconnecting to %1$s</string>
+
+    <string name="status_share_ask">%1$s wants to use this phone\'s network</string>
+    <string name="status_share_waiting">Sharing is on. Waiting for <b>akiyama client</b> on %1$s</string>
+    <string name="status_share_waiting_plain">Waiting for %1$s</string>
+    <string name="status_sharing">Sharing this phone\'s network with %1$s</string>
+    <string name="share_with">Share my network with %1$s</string>
+    <string name="stop_sharing">Stop sharing</string>
+    <string name="block_lan">Keep it off my local network</string>
+
+    <string name="connect_to">Use the network of %1$s</string>
+    <string name="use_adb">Use USB debugging instead</string>
+    <string name="use_adb_hint">For Windows, or when a computer can\'t use this phone as a USB accessory. Run <b>akiyama server --adb</b> on the computer.</string>
+    <string name="disconnect">Disconnect</string>
+
+    <string name="rate_down">Down</string>
+    <string name="rate_up">Up</string>
+    <string name="rate_value">%1$s Mbit/s</string>
+    <string name="total_down">↓ %1$s</string>
+    <string name="total_up">↑ %1$s</string>
+    <string name="ping">%1$s ms</string>
+
+    <string name="the_computer">the computer</string>
+    <string name="notification_channel">Connection status</string>
+    <string name="notification_disconnect">Disconnect</string>
+</resources>

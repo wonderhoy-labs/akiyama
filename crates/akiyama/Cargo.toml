@@ -1,0 +1,25 @@
+[package]
+name = "akiyama"
+description = "Full-duplex networking over USB, from a computer to an Android phone"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+akiyama-core = { path = "../akiyama-core" }
+anyhow = "1"
+bytes.workspace = true
+clap = { version = "4.6", features = ["derive"] }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Windows can't send a phone the accessory requests without replacing its driver, so it uses adb,
+# and it can only be a server.
+[target.'cfg(not(windows))'.dependencies]
+gethostname = "1"
+nusb = { version = "0.2", features = ["tokio"] }
+tun = { version = "0.8", features = ["async"] }

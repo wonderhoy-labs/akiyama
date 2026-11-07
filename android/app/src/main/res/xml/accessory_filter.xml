@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- crates/akiyama/src/aoa.rs sends these same two strings. -->
+<resources>
+    <usb-accessory manufacturer="Wonderhoy Labs" model="Akiyama" />
+</resources>
