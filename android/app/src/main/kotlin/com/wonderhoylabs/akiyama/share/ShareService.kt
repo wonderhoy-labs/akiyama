@@ -23,6 +23,7 @@ import com.wonderhoylabs.akiyama.client.statusNotification
 import com.wonderhoylabs.akiyama.link.AccessoryLink
 import com.wonderhoylabs.akiyama.link.Link
 import com.wonderhoylabs.akiyama.link.TcpLink
+import com.wonderhoylabs.akiyama.link.stillAttached
 import com.wonderhoylabs.akiyama.link.tidyComputerName
 import java.io.IOException
 import java.net.InetAddress
@@ -98,7 +99,8 @@ class ShareService : Service() {
             } catch (error: IOException) {
                 Log.i(TAG, "link ended: ${error.message}")
                 // Pulling the cable out ends the read too, and that's no error.
-                if (!shutDownOnce.get() && (accessory == null || stillAttached(accessory))) {
+                val usb = getSystemService(UsbManager::class.java)
+                if (!shutDownOnce.get() && (accessory == null || usb.stillAttached(accessory))) {
                     AkiyamaState.setError(error.message)
                 }
             } catch (error: ErrnoException) {
@@ -146,9 +148,6 @@ class ShareService : Service() {
             }
         }
     }
-
-    private fun stillAttached(accessory: UsbAccessory): Boolean =
-        getSystemService(UsbManager::class.java).accessoryList?.contains(accessory) == true
 
     private fun shutDown() {
         if (!shutDownOnce.compareAndSet(false, true)) return

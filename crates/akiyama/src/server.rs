@@ -12,7 +12,7 @@ use nusb::DeviceId;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite, BufReader};
 use tokio::net::TcpListener;
@@ -24,6 +24,9 @@ use tracing::{debug, info, warn};
 
 #[cfg(not(windows))]
 const SCAN_INTERVAL: Duration = Duration::from_millis(500);
+/// A phone whose app is reconnecting says hello every second, so this is plenty for it to answer.
+#[cfg(not(windows))]
+const TAKE_OVER_WAIT: Duration = Duration::from_secs(3);
 const ADB_SCAN_INTERVAL: Duration = Duration::from_secs(2);
 const TCP_READ_BUFFER_BYTES: usize = 256 * 1024;
 
@@ -68,14 +71,32 @@ async fn stopped(mut stop: watch::Receiver<bool>) {
     let _ = stop.wait_for(|stopped| *stopped).await;
 }
 
-async fn serve<R, W>(reader: R, writer: W, peer: String, config: Arc<NatConfig>, stop: watch::Receiver<bool>)
-where
+/// Finishes after `wait` if nothing has answered by then, and otherwise never does.
+#[cfg(not(windows))]
+async fn unanswered_for(wait: Duration, answered: &AtomicBool) {
+    tokio::time::sleep(wait).await;
+    if answered.load(Ordering::Relaxed) {
+        std::future::pending::<()>().await;
+    }
+}
+
+async fn serve<R, W>(
+    reader: R,
+    writer: W,
+    peer: String,
+    config: Arc<NatConfig>,
+    stop: watch::Receiver<bool>,
+    answered: Arc<AtomicBool>,
+) where
     R: AsyncRead + Unpin,
     W: AsyncWrite + Unpin,
 {
     let name = peer.clone();
     let report = move |event: SessionEvent| match event {
-        SessionEvent::Started => info!(phone = %name, "connected"),
+        SessionEvent::Started => {
+            answered.store(true, Ordering::Relaxed);
+            info!(phone = %name, "connected");
+        }
         SessionEvent::Ended(stats, problem) => {
             let sent = stats.bytes_sent.load(Ordering::Relaxed);
             let received = stats.bytes_received.load(Ordering::Relaxed);
@@ -97,12 +118,15 @@ async fn serve_usb(config: Arc<NatConfig>, serial: Option<String>, mut stop: wat
     info!("waiting for an Android phone. Plug one in with a USB cable, then allow Akiyama on it");
     let mut sessions: HashMap<DeviceId, JoinHandle<()>> = HashMap::new();
     let mut already_asked: HashSet<DeviceId> = HashSet::new();
+    let mut already_warned: HashSet<DeviceId> = HashSet::new();
+    let mut first_look = true;
 
     while !*stop.borrow() {
         let devices: Vec<_> = nusb::list_devices().await.context("couldn't list USB devices")?.collect();
         let present: HashSet<DeviceId> = devices.iter().map(|info| info.id()).collect();
         sessions.retain(|id, task| present.contains(id) && !task.is_finished());
         already_asked.retain(|id| present.contains(id));
+        already_warned.retain(|id| present.contains(id));
 
         for info in &devices {
             if serial.as_deref().is_some_and(|wanted| info.serial_number() != Some(wanted)) {
@@ -113,21 +137,41 @@ async fn serve_usb(config: Arc<NatConfig>, serial: Option<String>, mut stop: wat
                 if sessions.contains_key(&id) {
                     continue;
                 }
+                let was_already_there = first_look;
                 match aoa::open_accessory(info).await {
                     Ok(accessory) => {
                         info!(phone = %aoa::describe(info), "found a phone. Waiting for the Akiyama app");
                         let peer = aoa::describe(info);
                         let config = config.clone();
                         let stop = stop.clone();
+                        let phone = info.clone();
                         sessions.insert(
                             id,
                             tokio::spawn(async move {
                                 let aoa::Accessory { reader, writer } = accessory;
-                                serve(reader, writer, peer, config, stop).await;
+                                let answered = Arc::new(AtomicBool::new(false));
+                                let serving = serve(reader, writer, peer, config, stop, answered.clone());
+                                // A phone that was already in accessory mode might be there for
+                                // something else, like sharing its own network. If it doesn't say
+                                // hello, it gets asked again, with the right question this time.
+                                if was_already_there {
+                                    tokio::select! {
+                                        () = serving => {}
+                                        () = unanswered_for(TAKE_OVER_WAIT, &answered) => {
+                                            debug!("it isn't saying hello, so asking it to switch");
+                                            aoa::ask_again(&phone, aoa::Role::Server).await;
+                                        }
+                                    }
+                                } else {
+                                    serving.await;
+                                }
                             }),
                         );
                     }
-                    Err(error) => debug!("{error:#}"),
+                    // Telling someone once is enough, and a phone that's mid-switch isn't a problem.
+                    Err(error) if aoa::vanished(&error) => debug!("{error:#}"),
+                    Err(error) if already_warned.insert(id) => warn!("{error:#}"),
+                    Err(_) => {}
                 }
             } else if aoa::might_be_a_phone(info) && already_asked.insert(id) {
                 match aoa::switch_to_accessory(info, aoa::Role::Server).await {
@@ -138,6 +182,7 @@ async fn serve_usb(config: Arc<NatConfig>, serial: Option<String>, mut stop: wat
             }
         }
 
+        first_look = false;
         tokio::select! {
             () = tokio::time::sleep(SCAN_INTERVAL) => {}
             _ = stop.changed() => {}
@@ -220,5 +265,5 @@ fn spawn_tcp_session(
     let _ = stream.set_nodelay(true);
     let (reader, writer) = stream.into_split();
     let reader = BufReader::with_capacity(TCP_READ_BUFFER_BYTES, reader);
-    sessions.spawn(serve(reader, writer, peer, config.clone(), stop.clone()));
+    sessions.spawn(serve(reader, writer, peer, config.clone(), stop.clone(), Arc::default()));
 }

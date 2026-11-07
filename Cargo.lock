@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "akiyama"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "akiyama-core",
  "anyhow",
@@ -29,7 +29,7 @@ dependencies = [
 
 [[package]]
 name = "akiyama-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes",
  "etherparse 0.21.0",
@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "akiyama-jni"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "akiyama-core",
  "bytes",

@@ -154,7 +154,14 @@ pub async fn connect_to_phone(serial: Option<&str>, may_reset: bool) -> Result<(
                 continue;
             }
             if is_accessory(info) {
-                let mut accessory = open_accessory(info).await?;
+                let mut accessory = match open_accessory(info).await {
+                    Ok(accessory) => accessory,
+                    Err(error) if vanished(&error) => {
+                        debug!("{error:#}");
+                        continue;
+                    }
+                    Err(error) => return Err(error),
+                };
                 // A phone that's already in accessory mode might be sharing, which an earlier run
                 // left it doing. If it's not, whatever switched it asked for something else.
                 // Replugging would fix that, and so does a reset.
@@ -164,11 +171,8 @@ pub async fn connect_to_phone(serial: Option<&str>, may_reset: bool) -> Result<(
                         return Ok((accessory, describe(info), welcome.context("the handshake failed")?));
                     }
                     drop(accessory);
-                    match reset(info).await {
-                        Ok(()) => continue,
-                        Err(error) => debug!("couldn't reset the phone: {error:#}"),
-                    }
-                    accessory = open_accessory(info).await?;
+                    ask_again(info, Role::Client).await;
+                    continue;
                 }
                 let welcome = client_handshake(&mut accessory.reader, &mut accessory.writer)
                     .await
@@ -185,6 +189,31 @@ pub async fn connect_to_phone(serial: Option<&str>, may_reset: bool) -> Result<(
         }
         first_look = false;
         sleep(SCAN_INTERVAL).await;
+    }
+}
+
+/// True when a phone went away mid-operation, which is normal while it's switching modes.
+pub fn vanished(error: &anyhow::Error) -> bool {
+    error
+        .chain()
+        .filter_map(|cause| cause.downcast_ref::<nusb::Error>())
+        .any(|error| matches!(error.kind(), nusb::ErrorKind::Disconnected | nusb::ErrorKind::NotFound))
+}
+
+/// Changes what a phone already in accessory mode was asked for, as if it had just been plugged in.
+///
+/// A reset alone doesn't do it. Android waits a second before believing in a disconnect, so after a
+/// quick reset it can come back still in accessory mode, with the old role. So it gets the new
+/// strings first, and the reset is what makes it notice them.
+///
+/// Linux reports the reset as a failure, because the phone really does drop off the bus straight
+/// away. Either way, what to do next is look for it again.
+pub async fn ask_again(info: &DeviceInfo, role: Role) {
+    if let Err(error) = switch_to_accessory(info, role).await {
+        debug!("telling the phone what's wanted: {error:#}");
+    }
+    if let Err(error) = reset(info).await {
+        debug!("resetting the phone: {error:#}");
     }
 }
 
@@ -226,7 +255,7 @@ pub struct Accessory {
 
 /// Claims the accessory's bulk endpoints.
 pub async fn open_accessory(info: &DeviceInfo) -> Result<Accessory> {
-    let device = info.open().await.context("couldn't open the accessory")?;
+    let device = info.open().await.context("couldn't open the phone. On Linux, this needs a udev rule or root")?;
     let (number, address_in, address_out) = find_endpoints(&device)?;
     let interface = device.claim_interface(number).await.context("couldn't claim the accessory's USB interface")?;
     let endpoint_in =

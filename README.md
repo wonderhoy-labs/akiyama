@@ -31,10 +31,10 @@ the laptop and out through its Wi-Fi. There's no root on the phone, no USB debug
 
 ![The Akiyama app, on a phone in airplane mode, using a computer's internet](docs/screenshot.webp)
 
-> **This is early, and neither Linux nor Windows has ever been connected to a phone.** Their builds compile, but all our
-> testing was one Pixel 10 Pro on Android 17 with one Mac on macOS 27. [Here's exactly what that covers.](#what-has-been-tested)
-> If you try anything else, please [open an issue](https://github.com/wonderhoy-labs/akiyama/issues) and tell us how it
-> went, even if it just worked.
+> **This is early, and Windows has never been run.** All our testing was one Pixel 10 Pro on Android 17, with one Mac on
+> macOS 27 and one x86_64 Arch Linux laptop. [Here's exactly what that covers.](#what-has-been-tested) If you try anything
+> else, please [open an issue](https://github.com/wonderhoy-labs/akiyama/issues) and tell us how it went, even if it just
+> worked.
 
 ## What you need
 
@@ -42,11 +42,13 @@ A USB cable that carries data, since some only charge. We've only used USB-C to 
 
 - **Android:** Android 8 or newer, on a phone with USB accessory support, which nearly all of them have.
 - **macOS:** A recent version.
-- **Linux:** Permission to use USB devices. `sudo` is the simple way, and it's what the commands below would need.
+- **Linux:** Permission to use USB devices. A logged-in desktop session may already have it, through udev rules from a
+  package like `libmtp`, as ours did. If `akiyama` can't open the phone, `sudo` is the simple way.
 - **Windows:** [Android's platform tools](https://developer.android.com/tools/releases/platform-tools) for `adb`, and
   [USB debugging](https://developer.android.com/studio/debug/dev-options) turned on. It's the only system that needs them.
 
-Being a client on a computer needs root, because it creates a network device. Being a server on a Mac doesn't.
+Being a client on a computer needs root, because it creates a network device. Being a server doesn't need it, on a Mac or on
+a Linux desktop that has USB access.
 
 ## Install
 
@@ -56,7 +58,7 @@ Download the APK and the command-line tool for your system from
 On Android, open the APK on your phone, or install it with `adb`:
 
 ```bash
-adb install -r akiyama-v0.1.0.apk
+adb install -r akiyama-v0.1.1.apk
 ```
 
 On macOS or Linux, unpack the tool and put it on your path. The Linux builds are static, so they run on any distribution.
@@ -117,8 +119,9 @@ sudo akiyama client
 The phone asks whether to share its internet, and nothing happens until you tap **Share**. There's no VPN involved on the
 phone, and it doesn't need root.
 
-The computer creates a TUN device, sends all of its traffic into it and points DNS at it. It all goes back to normal when
-`akiyama` exits. To use a TUN device of your own and handle routing yourself, name it. On macOS, the name has to be `utun`
+The computer creates a TUN device, sends all of its traffic into it and points DNS at it. On Linux, DNS goes through
+`systemd-resolved` if it's running, and otherwise through `/etc/resolv.conf`. It all goes back to normal when `akiyama`
+exits. To use a TUN device of your own and handle routing yourself, name it. On macOS, the name has to be `utun`
 and a number.
 
 ```bash
@@ -141,22 +144,32 @@ with USB debugging**. Windows has no client, so to go the other way, use USB tet
 
 ### Switching directions
 
-`akiyama client` can take over a phone that's already plugged in. `akiyama server` can't yet, so to go from sharing the
-phone's network to using the computer's, tap **Stop sharing** and plug the cable back in.
+You don't need to touch the cable. `akiyama server` and `akiyama client` can both take over a phone that's already plugged in.
+If it doesn't answer within a few seconds, they ask it to switch, and it behaves as if it had just been plugged in. The whole
+thing took 3 to 6 seconds in our tests.
 
 ## What has been tested
 
-"Over USB" means a real cable between the Pixel and the Mac, in accessory mode. The development TCP link is the rest of
+"Over USB" means a real cable between the Pixel and a computer, in accessory mode. The development TCP link is the rest of
 Akiyama with USB swapped out.
+
+We tested Linux without root. A real `akiyama client` ran in an unprivileged user and network namespace, which gives it the
+same permissions over its own network devices. **Nobody has run it with `sudo` on a machine's real routes,** or with
+`systemd-resolved` running.
 
 | What | Status |
 | --- | --- |
+| Linux as server, Android VPN as client | Works over USB with no root, with DNS and HTTP, and with the phone locked and dozing |
+| Linux server with `--dev xray0`, and with `--no-lan` | Both work over USB. `--dev lo` reaches nothing, so the setting takes effect |
+| Android as server, Linux as `akiyama probe` | Works over USB with no root, with real DNS through the phone |
+| Android as server, Linux as `akiyama client` | Works over USB with a real TUN device in a namespace, with IPv4, DNS and HTTPS. DNS goes back to normal on exit, and survives `kill -9` as comments |
 | Mac as server, Android VPN as client | Works over USB, in debug and release builds, with DNS and HTTP |
 | Android as server, Mac as `akiyama probe` | Works over USB, in debug and release builds, with real DNS through the phone |
 | Android as server, Mac as `sudo akiyama client` | Works over USB, with IPv4, IPv6, DNS and HTTPS. Routes and DNS go back to normal on exit |
-| Running `akiyama client` again with the phone still sharing | Works over USB, and reconnects at once with no second tap |
-| `akiyama client` taking over a phone that's in accessory mode for something else | Works over USB. The phone resets and asks |
-| A restarted server, or a restarted app, on the same cable | Works over USB. The new session replaces the old one |
+| Running `akiyama client` again with the phone still sharing | Works over USB on both, and reconnects at once with no second tap |
+| Switching directions with no change of cable | Six times in a row on Linux, with traffic each way and no crashes. **The final version hasn't been run on a Mac**, though an earlier one was |
+| A restarted server on the same cable | Works over USB on both. The new session replaces the old one |
+| Two and a half minutes at full speed both ways | About 4.6 GB on Linux, in one session, with no drops |
 | `akiyama server --adb` | Works on the Mac, with DNS through the tunnel. This is the link Windows uses |
 | **Anything on Linux with a phone** | **Never run.** The tool starts on Arch, but it hasn't been connected to anything |
 | **Anything on Windows** | **Never run.** It only builds |
@@ -164,27 +177,28 @@ Akiyama with USB swapped out.
 | The app's screen, in light and dark | An automated test draws every state on an emulator, and we've looked at each one. Real flows ran there too, over the development TCP link |
 | **Intel Macs, ARM Linux, ARM Windows, and x86_64 or 32-bit ARM Android** | **Built, never run** |
 | **Android older than 17** | **Not tried.** The app's written for Android 8 and newer |
-| **A sleeping phone, and battery drain** | **Not tried** |
+| **Battery drain** | **Not tried** |
 
 ### Speed
 
 Measured with the Pixel on a 480 Mbit/s link, which is what its accessory mode gave us. The phone's end is where we read the
 numbers when the Mac's the server.
 
-| The Mac shares its network | Phone downloads | Phone uploads |
+| The computer shares its network | Mac: phone downloads | Mac: phone uploads | Linux: phone downloads | Linux: phone uploads |
+| --- | --- | --- | --- | --- |
+| Download | About 210 Mbit/s | | About 120 Mbit/s | |
+| Upload | | About 360 Mbit/s | | About 340 Mbit/s |
+| Both at once | About 150 Mbit/s | About 130 Mbit/s | About 130 Mbit/s | About 115 Mbit/s |
+
+Ping across the cable is 2 to 5 ms when idle, and 25 to 30 ms with the link full. The phone was awake for the Mac's numbers,
+and locked for the Linux ones.
+
+| The phone shares its network, with public test servers | Computer downloads | Computer uploads |
 | --- | --- | --- |
-| Download | About 210 Mbit/s | |
-| Upload | | About 360 Mbit/s |
-| Both at once | About 150 Mbit/s | About 130 Mbit/s |
+| Linux | About 130 Mbit/s | About 94 Mbit/s |
+| Mac | Not measured | About 168 Mbit/s |
 
-Ping across the cable is 2 to 3 ms when idle, and about 25 ms with the link full.
-
-| The phone shares its network | Mac downloads | Mac uploads |
-| --- | --- | --- |
-| Download, from a public test server | Not measured | |
-| Upload, to a public test server | | About 168 Mbit/s |
-
-That goes through the phone's Wi-Fi as well, so it says less about the cable. Ping to the phone itself is about a millisecond.
+Those go through the phone's Wi-Fi as well, so they say less about the cable. Ping to the phone itself is about a millisecond.
 
 The gap between the two directions is real. A computer can only write to the phone as fast as the phone reads, and Android's
 accessory driver reads 16 KiB at a time, one at a time. The phone's CPU is close to idle during a download, so it's the
@@ -295,10 +309,10 @@ Add `-v` to any of them to log more, or `-vv` for even more.
 or the phone may have become the USB host. With USB-C to USB-C, either end can. Open USB preferences on the phone and set
 **USB controlled by** to the connected device.
 
-**The phone's waiting, and so is `akiyama server`.** The phone's sharing its own network. Tap **Stop sharing** and plug the
-cable back in.
-
 **`akiyama` can't open the phone on Linux.** It needs permission to use the USB device, so use `sudo`.
+
+**`/etc/resolv.conf` says it was written by `akiyama client`, and it isn't running.** It normally restores this when it exits,
+but it can't after `kill -9`. What was there before is in the file as comments.
 
 **`akiyama client` says `couldn't open the TUN device`.** It needs root, so use `sudo`.
 
@@ -318,8 +332,7 @@ it for Akiyama in the app's settings.
 
 ## Known issues
 
-- Nothing has been run with a phone on Linux or Windows yet.
-- `akiyama server` can't take over a phone that's sharing its own network, so [plug the cable back in](#switching-directions).
+- Nothing has been run on Windows yet.
 - Windows can't be a client, and it needs USB debugging.
 - Downloads to the phone are slower than uploads from it, because of [how Android reads from USB](#speed).
 - Pinging through a server needs a system that allows unprivileged ICMP sockets. If it doesn't, pings just go unanswered.
@@ -402,6 +415,12 @@ adb forward tcp:47475 tcp:47475
 akiyama probe --dev-tcp 127.0.0.1:47475
 ```
 
+To test over a real cable with a locked phone, this answers the prompt that asks about sharing:
+
+```bash
+adb shell am start -n com.wonderhoylabs.akiyama/.ui.MainActivity --ez dev_accept_share true
+```
+
 </details>
 
 ## Under the hood
@@ -425,6 +444,12 @@ None of this is needed to use Akiyama. It's here so nobody has to work it out tw
 - **The phone's serial string can carry a message.** An accessory's strings are the only thing a computer can say before the
   app is running, and that's how the app tells which direction you asked for. Apps can only read it once they have permission.
 - **A Pixel keeps `adb` alive in accessory mode,** as product `2d01`, so you can still watch logs with the cable in.
+- **A USB reset doesn't reliably end accessory mode.** Android waits a second before believing in a disconnect, so after a quick
+  reset the phone can come back still in accessory mode, with the old role. Sending the new strings first and then resetting
+  works every time. On Linux, the reset itself also reports failure, because the phone drops off the bus straight away.
+- **Comparing two `UsbAccessory` objects can crash an app.** `equals` reads their serial numbers, and Android throws a
+  `SecurityException` for that once the accessory has gone. So asking whether one's still plugged in fails at exactly the
+  moment the answer is no.
 - **Android 17 blocks private addresses without `ACCESS_LOCAL_NETWORK`,** and the connection just times out. It's easy to
   mistake for a network problem.
 - **`VpnService.protect` needs a real socket.** A new Java `Socket` doesn't have one until it's bound. Without that, the

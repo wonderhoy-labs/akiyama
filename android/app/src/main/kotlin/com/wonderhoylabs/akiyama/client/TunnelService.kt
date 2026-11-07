@@ -29,6 +29,7 @@ import com.wonderhoylabs.akiyama.link.Link
 import com.wonderhoylabs.akiyama.link.LinkSession
 import com.wonderhoylabs.akiyama.link.Proto
 import com.wonderhoylabs.akiyama.link.TcpLink
+import com.wonderhoylabs.akiyama.link.stillAttached
 import com.wonderhoylabs.akiyama.link.tidyComputerName
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -142,7 +143,7 @@ class TunnelService : VpnService() {
                 opened?.close()
             }
             if (stopping) break
-            if (accessory != null && !stillAttached(accessory)) break
+            if (accessory != null && !getSystemService(UsbManager::class.java).stillAttached(accessory)) break
             Log.i(TAG, "link ended: $reason")
             AkiyamaState.setStatus(TunnelStatus.Reconnecting(computer, reason))
             goForeground(R.string.notification_reconnecting, computer)
@@ -170,9 +171,6 @@ class TunnelService : VpnService() {
             TcpLink(socket)
         }
     }
-
-    private fun stillAttached(accessory: UsbAccessory): Boolean =
-        getSystemService(UsbManager::class.java).accessoryList?.contains(accessory) == true
 
     private fun ensureTunnel(welcome: Proto.Welcome): ParcelFileDescriptor {
         resolver?.setUpstream(welcome.upstreamDns)

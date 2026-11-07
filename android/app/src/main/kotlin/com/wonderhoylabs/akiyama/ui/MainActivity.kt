@@ -145,13 +145,17 @@ class MainActivity : ComponentActivity() {
             } ?: return
             askDismissed.value = false
             setAccessory(found)
-            // A computer that wants this phone's internet has to wait for a tap.
-            if (roleOf(found) != ComputerRole.Wants) connect(Target.Accessory(found))
+            // Anything else waits for a tap, and that includes not being able to tell.
+            if (roleOf(found) == ComputerRole.Shares) connect(Target.Accessory(found))
         } else if (BuildConfig.DEBUG) {
             intent.getStringExtra(EXTRA_DEV_TCP)?.let { connect(Target.Tcp(it)) }
             intent.getIntExtra(EXTRA_DEV_TCP_LISTEN, 0).takeIf { it != 0 }?.let { port ->
                 askForNotifications()
                 ShareService.listenTcp(this, port)
+            }
+            if (intent.getBooleanExtra(EXTRA_DEV_ACCEPT_SHARE, false)) {
+                refreshAttached()
+                share(blockLan = false)
             }
         }
     }
@@ -244,6 +248,8 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_DEV_TCP = "dev_tcp"
         /** Debug builds only: `--ei dev_tcp_listen port` shares over TCP, for an emulator. */
         const val EXTRA_DEV_TCP_LISTEN = "dev_tcp_listen"
+        /** Debug builds only: `--ez dev_accept_share true` answers the prompt, on a phone nobody's holding. */
+        const val EXTRA_DEV_ACCEPT_SHARE = "dev_accept_share"
         const val ACTION_USB_PERMISSION = "com.wonderhoylabs.akiyama.USB_PERMISSION"
         const val REQUEST_PERMISSIONS = 1
         /** The version of Android that started enforcing the local network permission. */

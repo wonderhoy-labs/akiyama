@@ -15,14 +15,33 @@ interface Link : Closeable {
     val fd: FileDescriptor
 }
 
+/**
+ * Whether this accessory is still plugged in. Comparing accessories reads their serial numbers, and
+ * Android refuses that once the permission has gone with the accessory, so a refusal means no.
+ */
+fun UsbManager.stillAttached(accessory: UsbAccessory): Boolean = try {
+    accessoryList?.contains(accessory) == true
+} catch (_: SecurityException) {
+    false
+}
+
 /** The USB accessory: the phone's end of the cable, as a file. */
 class AccessoryLink(manager: UsbManager, accessory: UsbAccessory) : Link {
-    private val file: ParcelFileDescriptor = manager.openAccessory(accessory)
+    private val file: ParcelFileDescriptor = open(manager, accessory)
         ?: throw IOException("Couldn't open the USB connection. Try unplugging the phone and plugging it back in.")
     override val fd: FileDescriptor get() = file.fileDescriptor
 
     override fun close() {
         runCatching { file.close() }
+    }
+
+    private fun open(manager: UsbManager, accessory: UsbAccessory): ParcelFileDescriptor? = try {
+        manager.openAccessory(accessory)
+    } catch (error: SecurityException) {
+        // It was replaced or unplugged after this got hold of it.
+        throw IOException("The USB connection went away.", error)
+    } catch (error: IllegalArgumentException) {
+        throw IOException("The USB connection went away.", error)
     }
 }
 

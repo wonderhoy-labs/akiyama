@@ -8,6 +8,8 @@ mod aoa;
 mod client;
 #[cfg(not(windows))]
 mod probe;
+#[cfg(target_os = "linux")]
+mod resolv_conf;
 mod server;
 #[cfg(not(windows))]
 mod tunnel;
