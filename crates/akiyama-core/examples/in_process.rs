@@ -62,7 +62,11 @@ async fn main() -> io::Result<()> {
 			let _ = deliver.send(packet);
 		};
 		let mut stop = std::pin::pin!(std::future::pending::<()>());
-		pump(&mut reader, &mut writer, &mut outbound, on_packet, session, Arc::new(Stats::default()), &mut stop).await
+		let end =
+			pump(&mut reader, &mut writer, &mut outbound, on_packet, session, Arc::new(Stats::default()), &mut stop)
+				.await;
+		// Handing the halves back keeps the link open, the way a USB cable stays plugged in between sessions.
+		(end, reader, writer)
 	});
 
 	let sent = Instant::now();
@@ -78,13 +82,15 @@ async fn main() -> io::Result<()> {
 		None => println!("The answer had no address in it"),
 	}
 
-	// Closing the outbound queue ends the client's session with a goodbye. The server would wait for
-	// the next one on the same link, so it's stopped too.
+	// Closing the outbound queue ends the client's session with a goodbye. The server then waits for
+	// the next session on the same link, so it has to be stopped too. That has to happen before the
+	// link closes, because to the server a closed link means the cable came out, which is an error.
 	drop(to_server);
-	let end = client.await.map_err(io::Error::other)??;
-	println!("Client: the session ended with {end:?}");
+	let (end, reader, writer) = client.await.map_err(io::Error::other)?;
+	println!("Client: the session ended with {:?}", end?);
 	let _ = stop_server.send(());
 	server.await.map_err(io::Error::other)??;
+	drop((reader, writer));
 	Ok(())
 }
 
