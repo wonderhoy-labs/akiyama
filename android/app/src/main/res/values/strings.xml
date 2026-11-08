@@ -1,71 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Akiyama</string>
-    <string name="tagline">Networking over USB</string>
-    <string name="this_phone">This phone</string>
-    <string name="computer">Computer</string>
-    <string name="the_computer">the computer</string>
+	<string name="app_name">Akiyama</string>
+	<string name="tagline">Networking over USB</string>
+	<string name="this_phone">This phone</string>
+	<string name="computer">Computer</string>
+	<string name="the_computer">the computer</string>
 
-    <string name="command_server" translatable="false">akiyama server</string>
-    <string name="command_client" translatable="false">sudo akiyama client</string>
-    <string name="command_server_adb" translatable="false">akiyama server --adb</string>
+	<string name="command_server" translatable="false">akiyama server</string>
+	<string name="command_client" translatable="false">sudo akiyama client</string>
+	<string name="command_server_adb" translatable="false">akiyama server --adb</string>
 
-    <!-- Nothing plugged in -->
-    <string name="unplugged_title">Plug into a computer</string>
-    <string name="unplugged_body">Connect a USB cable, then run one of these on the computer.</string>
-    <string name="option_use">Use the computer\'s internet</string>
-    <string name="option_use_hint">Replaces any other VPN on this phone while it\'s on.</string>
-    <string name="option_share">Share this phone\'s internet</string>
-    <string name="option_share_hint">Nothing is shared until you say so here.</string>
-    <string name="adb_toggle">Windows, or using USB debugging</string>
-    <string name="adb_body">Turn on USB debugging, run this on the computer, then tap below.</string>
-    <string name="adb_connect">Connect with USB debugging</string>
+	<!-- Nothing plugged in -->
+	<string name="unplugged_title">Plug into a computer</string>
+	<string name="unplugged_body">Connect a USB cable, then run one of these on the computer.</string>
+	<string name="option_use">Use the computer\'s internet</string>
+	<string name="option_use_hint">Replaces any other VPN on this phone while it\'s on.</string>
+	<string name="option_share">Share this phone\'s internet</string>
+	<string name="option_share_hint">Nothing is shared until you say so here.</string>
+	<string name="adb_toggle">Windows, or using USB debugging</string>
+	<string name="adb_body">Turn on USB debugging, run this on the computer, then tap below.</string>
+	<string name="adb_connect">Connect with USB debugging</string>
 
-    <!-- Plugged in, and nothing running -->
-    <string name="ask_title">Share this phone\'s internet?</string>
-    <string name="ask_body">Requested by %1$s. It can use this phone\'s connection until you stop sharing or unplug the cable.</string>
-    <string name="block_lan">Keep the computer off my local network</string>
-    <string name="block_lan_hint">It can still reach the internet.</string>
-    <string name="share">Share</string>
-    <string name="not_now">Not now</string>
-    <string name="not_sharing_title">Not sharing</string>
-    <string name="not_sharing_body">Still plugged into %1$s, which can\'t use this phone\'s internet.</string>
-    <string name="disconnected_title">Disconnected</string>
-    <string name="disconnected_body">Still plugged into %1$s. Connecting sends all of this phone\'s traffic through it, and replaces any other VPN.</string>
-    <string name="connect">Connect</string>
-    <string name="attached_title">Plugged into a computer</string>
-    <string name="attached_body">Connected to %1$s over USB. Which way should the internet go?</string>
+	<!-- Plugged in, and nothing running -->
+	<string name="ask_title">Share this phone\'s internet?</string>
+	<string name="ask_body">Requested by %1$s. It can use this phone\'s connection until you stop sharing or unplug the cable.</string>
+	<string name="block_lan">Keep the computer off my local network</string>
+	<string name="block_lan_hint">It can still reach the internet.</string>
+	<string name="share">Share</string>
+	<string name="not_now">Not now</string>
+	<string name="not_sharing_title">Not sharing</string>
+	<string name="not_sharing_body">Still plugged into %1$s, which can\'t use this phone\'s internet.</string>
+	<string name="disconnected_title">Disconnected</string>
+	<string name="disconnected_body">Still plugged into %1$s. Connecting sends all of this phone\'s traffic through it, and replaces any other VPN.</string>
+	<string name="connect">Connect</string>
+	<string name="attached_title">Plugged into a computer</string>
+	<string name="attached_body">Connected to %1$s over USB. Which way should the internet go?</string>
 
-    <!-- Using the computer's internet -->
-    <string name="connecting_title">Connecting</string>
-    <string name="waiting_title">Waiting for the computer</string>
-    <string name="waiting_body">Run this on it:</string>
-    <string name="connected_title">Connected</string>
-    <string name="connected_body">This phone is using the internet from %1$s.</string>
-    <string name="reconnecting_title">Reconnecting</string>
-    <string name="reconnecting_body">The link to %1$s dropped. This phone\'s traffic waits until it\'s back, so nothing goes out another way.</string>
-    <string name="cancel">Cancel</string>
-    <string name="disconnect">Disconnect</string>
+	<!-- Using the computer's internet -->
+	<string name="connecting_title">Connecting</string>
+	<string name="waiting_title">Waiting for the computer</string>
+	<string name="waiting_body">Run this on it:</string>
+	<string name="connected_title">Connected</string>
+	<string name="connected_body">This phone is using the internet from %1$s.</string>
+	<string name="reconnecting_title">Reconnecting</string>
+	<string name="reconnecting_body">The link to %1$s dropped. This phone\'s traffic waits until it\'s back, so nothing goes out another way.</string>
+	<string name="cancel">Cancel</string>
+	<string name="disconnect">Disconnect</string>
 
-    <!-- Sharing this phone's internet -->
-    <string name="share_ready_title">Ready to share</string>
-    <string name="share_ready_body">Waiting for %1$s to connect. Run this on it:</string>
-    <string name="sharing_title">Sharing</string>
-    <string name="sharing_body">This phone\'s internet is going to %1$s.</string>
-    <string name="stop_sharing">Stop sharing</string>
+	<!-- Sharing this phone's internet -->
+	<string name="share_ready_title">Ready to share</string>
+	<string name="share_ready_body">Waiting for %1$s to connect. Run this on it:</string>
+	<string name="sharing_title">Sharing</string>
+	<string name="sharing_body">This phone\'s internet is going to %1$s.</string>
+	<string name="stop_sharing">Stop sharing</string>
 
-    <string name="rate_down">Download</string>
-    <string name="rate_up">Upload</string>
-    <string name="totals">%1$s down · %2$s up</string>
-    <string name="ping">%1$s ms ping</string>
+	<string name="rate_down">Download</string>
+	<string name="rate_up">Upload</string>
+	<string name="totals">%1$s down · %2$s up</string>
+	<string name="ping">%1$s ms ping</string>
 
-    <string name="vpn_refused">Android needs your OK before Akiyama can carry this phone\'s traffic.</string>
-    <string name="dismiss">Dismiss</string>
+	<string name="vpn_refused">Android needs your OK before Akiyama can carry this phone\'s traffic.</string>
+	<string name="dismiss">Dismiss</string>
 
-    <string name="notification_channel">Connection status</string>
-    <string name="notification_connecting">Connecting to %1$s</string>
-    <string name="notification_connected">Connected to %1$s</string>
-    <string name="notification_reconnecting">Reconnecting to %1$s</string>
-    <string name="notification_share_waiting">Waiting for %1$s</string>
-    <string name="notification_sharing">Sharing this phone\'s internet with %1$s</string>
+	<string name="notification_channel">Connection status</string>
+	<string name="notification_connecting">Connecting to %1$s</string>
+	<string name="notification_connected">Connected to %1$s</string>
+	<string name="notification_reconnecting">Reconnecting to %1$s</string>
+	<string name="notification_share_waiting">Waiting for %1$s</string>
+	<string name="notification_sharing">Sharing this phone\'s internet with %1$s</string>
 </resources>

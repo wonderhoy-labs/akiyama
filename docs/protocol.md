@@ -10,14 +10,14 @@ check the same bytes.
 The computer is always the USB host, and it switches the phone into Android Open Accessory mode with
 control requests 51, 52 and 53. The strings it sends are:
 
-| Index | Name | Value |
-| --- | --- | --- |
-| 0 | Manufacturer | `Wonderhoy Labs` |
-| 1 | Model | `Akiyama` |
-| 2 | Description | The computer's name, which the app shows |
-| 3 | Version | The version of the tool |
-| 4 | URI | This repository |
-| 5 | Serial | `akiyama-server` if the computer's sharing, `akiyama-client` if it wants the phone's network |
+| Index | Name         | Value                                                                                        |
+| ----- | ------------ | -------------------------------------------------------------------------------------------- |
+| 0     | Manufacturer | `Wonderhoy Labs`                                                                             |
+| 1     | Model        | `Akiyama`                                                                                    |
+| 2     | Description  | The computer's name, which the app shows                                                     |
+| 3     | Version      | The version of the tool                                                                      |
+| 4     | URI          | This repository                                                                              |
+| 5     | Serial       | `akiyama-server` if the computer's sharing, `akiyama-client` if it wants the phone's network |
 
 The phone comes back as vendor `18d1`, product `2d00` to `2d05`. Everything after that uses the
 first vendor-specific interface's two bulk endpoints as a reliable, ordered byte stream that runs in
@@ -34,22 +34,22 @@ computer listening on the port and the phone connecting to the abstract socket `
 
 Everything on the stream is a frame. Numbers are big-endian.
 
-| Bytes | Value |
-| --- | --- |
-| 1 | Type |
-| 2 | Payload length |
-| n | Payload |
+| Bytes | Value          |
+| ----- | -------------- |
+| 1     | Type           |
+| 2     | Payload length |
+| n     | Payload        |
 
 Skip frames with a type you don't know. Later versions may add some.
 
-| Type | Name | Payload |
-| --- | --- | --- |
-| 1 | Hello | `AKIY`, the protocol version in 1 byte, then a session ID in 8 bytes |
-| 2 | Welcome | See below |
-| 3 | Packet | One IP packet, IPv4 or IPv6 |
-| 4 | Ping | 8 bytes of anything |
-| 5 | Pong | The same 8 bytes as the ping it answers |
-| 6 | Bye | The reason in 1 byte: 0 for normal, 1 for a version mismatch |
+| Type | Name    | Payload                                                              |
+| ---- | ------- | -------------------------------------------------------------------- |
+| 1    | Hello   | `AKIY`, the protocol version in 1 byte, then a session ID in 8 bytes |
+| 2    | Welcome | See below                                                            |
+| 3    | Packet  | One IP packet, IPv4 or IPv6                                          |
+| 4    | Ping    | 8 bytes of anything                                                  |
+| 5    | Pong    | The same 8 bytes as the ping it answers                              |
+| 6    | Bye     | The reason in 1 byte: 0 for normal, 1 for a version mismatch         |
 
 Allow for longer payloads than these. A later version may add fields to the end.
 
@@ -59,17 +59,17 @@ The side that wants the network is the client, and that can be either the comput
 picks a random session ID and sends a hello every second until it gets a welcome with the same ID.
 The other side, the server, answers with this:
 
-| Bytes | Value |
-| --- | --- |
-| 8 | The session ID from the hello |
-| 2 | MTU of the tunnel |
-| 4 | Client's IPv4 address |
-| 4 | Gateway's IPv4 address |
-| 1 | IPv4 prefix length |
-| 16 | Client's IPv6 address |
-| 16 | Gateway's IPv6 address |
-| 1 | IPv6 prefix length |
-| 4 | Upstream DNS server, IPv4 |
+| Bytes | Value                         |
+| ----- | ----------------------------- |
+| 8     | The session ID from the hello |
+| 2     | MTU of the tunnel             |
+| 4     | Client's IPv4 address         |
+| 4     | Gateway's IPv4 address        |
+| 1     | IPv4 prefix length            |
+| 16    | Client's IPv6 address         |
+| 16    | Gateway's IPv6 address        |
+| 1     | IPv6 prefix length            |
+| 4     | Upstream DNS server, IPv4     |
 
 A server that gets a hello with a new session ID drops the old session, including its connections,
 and starts again. One with the same ID is a repeat, and gets ignored.
@@ -94,11 +94,11 @@ client starts again with a new session ID, if it's going to.
 
 ## Addresses
 
-| | IPv4 | IPv6 |
-| --- | --- | --- |
-| Gateway | `10.233.78.1/24` | `fd41:6b69:7961::1/64` |
-| Client | `10.233.78.2` | `fd41:6b69:7961::2` |
-| Client's resolver | `10.233.78.3` | |
+|                   | IPv4             | IPv6                   |
+| ----------------- | ---------------- | ---------------------- |
+| Gateway           | `10.233.78.1/24` | `fd41:6b69:7961::1/64` |
+| Client            | `10.233.78.2`    | `fd41:6b69:7961::2`    |
+| Client's resolver | `10.233.78.3`    |                        |
 
 The client points its system's DNS at the gateway, picks those queries out of the tunnel, and sends
 what it can't answer from its cache to the upstream server, from the resolver's address. A TCP
