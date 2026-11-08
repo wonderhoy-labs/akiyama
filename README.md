@@ -7,11 +7,10 @@
 <p align="center">Full-duplex networking over a USB cable.</p>
 
 <p align="center">
-  <a href="https://github.com/wonderhoy-labs/akiyama/actions/workflows/build.yml"><img src="https://github.com/wonderhoy-labs/akiyama/actions/workflows/build.yml/badge.svg" alt="Build"></a>
+  <a href="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml"><img src="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache 2.0"></a>
+  <a href="#license-and-credits"><img src="https://img.shields.io/badge/Akiyama%20Mizuki-25--ji%2C%20Nightcord%20de.-DDAACC" alt="Named for Akiyama Mizuki of 25-ji, Nightcord de."></a>
 </p>
-
-<p align="center"><sub>A <a href="https://github.com/wonderhoy-labs">Wonderhoy Labs</a> project</sub></p>
 
 Akiyama shares a network connection between an Android phone and a computer over a USB cable. One end, the server, has the
 network. The other, the client, sends all of its traffic to the server over the cable, in both directions at once, and it
@@ -39,7 +38,6 @@ the laptop and out through its Wi-Fi. There's no root on the phone, no USB debug
 ## What you need
 
 A USB cable that carries data, since some only charge. We've only used USB-C to USB-C. You also need:
-
 - **Android:** Android 8 or newer, on a phone with USB accessory support, which nearly all of them have.
 - **macOS:** A recent version.
 - **Linux:** Permission to use USB devices. A logged-in desktop session may already have it, through udev rules from a
@@ -157,27 +155,27 @@ We tested Linux without root. A real `akiyama client` ran in an unprivileged use
 same permissions over its own network devices. **Nobody has run it with `sudo` on a machine's real routes,** or with
 `systemd-resolved` running.
 
-| What | Status |
-| --- | --- |
-| Linux as server, Android VPN as client | Works over USB with no root, with DNS and HTTP, and with the phone locked and dozing |
-| Linux server with `--dev xray0`, and with `--no-lan` | Both work over USB. `--dev lo` reaches nothing, so the setting takes effect |
-| Android as server, Linux as `akiyama probe` | Works over USB with no root, with real DNS through the phone |
-| Android as server, Linux as `akiyama client` | Works over USB with a real TUN device in a namespace, with IPv4, DNS and HTTPS. DNS goes back to normal on exit, and survives `kill -9` as comments |
-| Mac as server, Android VPN as client | Works over USB, in debug and release builds, with DNS and HTTP |
-| Android as server, Mac as `akiyama probe` | Works over USB, in debug and release builds, with real DNS through the phone |
-| Android as server, Mac as `sudo akiyama client` | Works over USB, with IPv4, IPv6, DNS and HTTPS. Routes and DNS go back to normal on exit |
-| Running `akiyama client` again with the phone still sharing | Works over USB on both, and reconnects at once with no second tap |
-| Switching directions with no change of cable | Six times in a row on Linux, with traffic each way and no crashes. **The final version hasn't been run on a Mac**, though an earlier one was |
-| A restarted server on the same cable | Works over USB on both. The new session replaces the old one |
-| Two and a half minutes at full speed both ways | About 4.6 GB on Linux, in one session, with no drops |
-| `akiyama server --adb` | Works on the Mac, with DNS through the tunnel. This is the link Windows uses |
-| **Anything on Linux with a phone** | **Never run.** The tool starts on Arch, but it hasn't been connected to anything |
-| **Anything on Windows** | **Never run.** It only builds |
-| An Android phone with no other network | Works on an emulator with airplane mode on and Wi-Fi and mobile data off, using `--adb`. Ping, DNS and HTTP work, and Android calls the VPN validated. **Not tried on a real phone** |
-| The app's screen, in light and dark | An automated test draws every state on an emulator, and we've looked at each one. Real flows ran there too, over the development TCP link |
-| **Intel Macs, ARM Linux, ARM Windows, and x86_64 or 32-bit ARM Android** | **Built, never run** |
-| **Android older than 17** | **Not tried.** The app's written for Android 8 and newer |
-| **Battery drain** | **Not tried** |
+| What                                                                     | Status                                                                                                                                                                               |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Linux as server, Android VPN as client                                   | Works over USB with no root, with DNS and HTTP, and with the phone locked and dozing                                                                                                 |
+| Linux server with `--dev xray0`, and with `--no-lan`                     | Both work over USB. `--dev lo` reaches nothing, so the setting takes effect                                                                                                          |
+| Android as server, Linux as `akiyama probe`                              | Works over USB with no root, with real DNS through the phone                                                                                                                         |
+| Android as server, Linux as `akiyama client`                             | Works over USB with a real TUN device in a namespace, with IPv4, DNS and HTTPS. DNS goes back to normal on exit, and survives `kill -9` as comments                                  |
+| Mac as server, Android VPN as client                                     | Works over USB, in debug and release builds, with DNS and HTTP                                                                                                                       |
+| Android as server, Mac as `akiyama probe`                                | Works over USB, in debug and release builds, with real DNS through the phone                                                                                                         |
+| Android as server, Mac as `sudo akiyama client`                          | Works over USB, with IPv4, IPv6, DNS and HTTPS. Routes and DNS go back to normal on exit                                                                                             |
+| Running `akiyama client` again with the phone still sharing              | Works over USB on both, and reconnects at once with no second tap                                                                                                                    |
+| Switching directions with no change of cable                             | Six times in a row on Linux, with traffic each way and no crashes. **The final version hasn't been run on a Mac**, though an earlier one was                                         |
+| A restarted server on the same cable                                     | Works over USB on both. The new session replaces the old one                                                                                                                         |
+| Two and a half minutes at full speed both ways                           | About 4.6 GB on Linux, in one session, with no drops                                                                                                                                 |
+| `akiyama server --adb`                                                   | Works on the Mac, with DNS through the tunnel. This is the link Windows uses                                                                                                         |
+| **Anything on Linux with a phone**                                       | **Never run.** The tool starts on Arch, but it hasn't been connected to anything                                                                                                     |
+| **Anything on Windows**                                                  | **Never run.** It only builds                                                                                                                                                        |
+| An Android phone with no other network                                   | Works on an emulator with airplane mode on and Wi-Fi and mobile data off, using `--adb`. Ping, DNS and HTTP work, and Android calls the VPN validated. **Not tried on a real phone** |
+| The app's screen, in light and dark                                      | An automated test draws every state on an emulator, and we've looked at each one. Real flows ran there too, over the development TCP link                                            |
+| **Intel Macs, ARM Linux, ARM Windows, and x86_64 or 32-bit ARM Android** | **Built, never run**                                                                                                                                                                 |
+| **Android older than 17**                                                | **Not tried.** The app's written for Android 8 and newer                                                                                                                             |
+| **Battery drain**                                                        | **Not tried**                                                                                                                                                                        |
 
 ### Speed
 
@@ -185,18 +183,18 @@ Measured with the Pixel on a 480 Mbit/s link, which is what its accessory mode g
 numbers when the Mac's the server.
 
 | The computer shares its network | Mac: phone downloads | Mac: phone uploads | Linux: phone downloads | Linux: phone uploads |
-| --- | --- | --- | --- | --- |
-| Download | About 210 Mbit/s | | About 120 Mbit/s | |
-| Upload | | About 360 Mbit/s | | About 340 Mbit/s |
-| Both at once | About 150 Mbit/s | About 130 Mbit/s | About 130 Mbit/s | About 115 Mbit/s |
+| ------------------------------- | -------------------- | ------------------ | ---------------------- | -------------------- |
+| Download                        | About 210 Mbit/s     |                    | About 120 Mbit/s       |                      |
+| Upload                          |                      | About 360 Mbit/s   |                        | About 340 Mbit/s     |
+| Both at once                    | About 150 Mbit/s     | About 130 Mbit/s   | About 130 Mbit/s       | About 115 Mbit/s     |
 
 Ping across the cable is 2 to 5 ms when idle, and 25 to 30 ms with the link full. The phone was awake for the Mac's numbers,
 and locked for the Linux ones.
 
 | The phone shares its network, with public test servers | Computer downloads | Computer uploads |
-| --- | --- | --- |
-| Linux | About 130 Mbit/s | About 94 Mbit/s |
-| Mac | Not measured | About 168 Mbit/s |
+| ------------------------------------------------------ | ------------------ | ---------------- |
+| Linux                                                  | About 130 Mbit/s   | About 94 Mbit/s  |
+| Mac                                                    | Not measured       | About 168 Mbit/s |
 
 Those go through the phone's Wi-Fi as well, so they say less about the cable. Ping to the phone itself is about a millisecond.
 
@@ -243,7 +241,7 @@ mean far less work per byte on both ends.
 **The Android app** is Kotlin, including its USB and its half of the protocol. Sharing the phone's network needs that same
 TCP/IP stack, so that part is the Rust code the command-line tool uses, built into the APK with the NDK.
 
-## Security
+## Security and privacy
 
 Worth reading before you run a server.
 
@@ -273,32 +271,32 @@ the app don't include it, but the command-line tool does.
 
 ### `akiyama server`
 
-| Option | Default | What it does |
-| --- | --- | --- |
-| `--dev DEVICE` | Follow the routing table | Network device or TUN for the phone's traffic, on Linux and macOS |
-| `--dns IPV4` | `1.1.1.1` | The resolver the phone uses |
-| `--no-lan` | off | Keep the phone off private addresses |
-| `--adb` | Only on Windows | Connect through `adb` instead of as a USB accessory. Needs USB debugging |
-| `--serial SERIAL` | Any phone | Only serve the phone with this serial number |
-| `--mtu BYTES` | `16000` | The tunnel's MTU, from 1280 to 65000 |
+| Option            | Default                  | What it does                                                             |
+| ----------------- | ------------------------ | ------------------------------------------------------------------------ |
+| `--dev DEVICE`    | Follow the routing table | Network device or TUN for the phone's traffic, on Linux and macOS        |
+| `--dns IPV4`      | `1.1.1.1`                | The resolver the phone uses                                              |
+| `--no-lan`        | off                      | Keep the phone off private addresses                                     |
+| `--adb`           | Only on Windows          | Connect through `adb` instead of as a USB accessory. Needs USB debugging |
+| `--serial SERIAL` | Any phone                | Only serve the phone with this serial number                             |
+| `--mtu BYTES`     | `16000`                  | The tunnel's MTU, from 1280 to 65000                                     |
 
 ### `akiyama client`
 
 macOS and Linux only.
 
-| Option | Default | What it does |
-| --- | --- | --- |
-| `--dev DEVICE` | `akiyama0` on Linux, the next `utun` on macOS | TUN device to use, or to create |
-| `--no-routes` | off | Don't send this machine's traffic into the tunnel |
-| `--no-dns` | off | Don't point this machine's DNS at the tunnel |
-| `--serial SERIAL` | Any phone | Only connect to the phone with this serial number |
-| `--once` | off | Exit when the link drops instead of reconnecting |
+| Option            | Default                                       | What it does                                      |
+| ----------------- | --------------------------------------------- | ------------------------------------------------- |
+| `--dev DEVICE`    | `akiyama0` on Linux, the next `utun` on macOS | TUN device to use, or to create                   |
+| `--no-routes`     | off                                           | Don't send this machine's traffic into the tunnel |
+| `--no-dns`        | off                                           | Don't point this machine's DNS at the tunnel      |
+| `--serial SERIAL` | Any phone                                     | Only connect to the phone with this serial number |
+| `--once`          | off                                           | Exit when the link drops instead of reconnecting  |
 
 ### Other commands
 
-| Command | What it does |
-| --- | --- |
-| `akiyama devices` | Lists the phones it can see |
+| Command                                       | What it does                                                                                                |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `akiyama devices`                             | Lists the phones it can see                                                                                 |
 | `akiyama probe [--serial SERIAL] [--count N]` | Connects, pings the phone and does a DNS lookup through it, without changing anything. macOS and Linux only |
 
 Add `-v` to any of them to log more, or `-vv` for even more.
@@ -343,6 +341,13 @@ it for Akiyama in the app's settings.
 You need Rust 1.91 or newer. For the Android app you also need JDK 17 or newer, the Android SDK with platform 37, NDK
 30.0.16248370 and [cargo-ndk](https://github.com/bbqsrc/cargo-ndk).
 
+Akiyama follows the [Wonderhoy Labs guideline](.claude/skills/wonderhoy-unification/SKILL.md), like every Wonderhoy Labs project.
+The shared tools need Node 24 or newer and pnpm. Format before you commit, and check the result:
+
+```bash
+pnpm install && pnpm format && pnpm unify
+```
+
 ```bash
 cargo test --workspace
 ```
@@ -365,21 +370,22 @@ Adding `-Pakiyama.abis=arm64-v8a` builds the app faster, for one kind of device.
 `android/app/build/outputs/apk/release/app-release.apk`. It's signed with your debug key unless you set `AKIYAMA_KEYSTORE`,
 `AKIYAMA_KEYSTORE_PASSWORD`, `AKIYAMA_KEY_ALIAS` and `AKIYAMA_KEY_PASSWORD`.
 
-| Where | What's in it |
-| --- | --- |
-| `crates/akiyama-core/` | The protocol, the NAT, the DNS resolver and the session logic, shared by everything |
-| `crates/akiyama/src/aoa.rs` | Switching a phone to accessory mode, and its USB link |
-| `crates/akiyama/src/adb.rs` | The `adb` link, for Windows |
-| `crates/akiyama/src/tunnel.rs` | The client's TUN device, routes and DNS settings |
-| `crates/akiyama-jni/` | Lets the Android app use the NAT |
-| `android/app/src/main/kotlin/com/wonderhoylabs/akiyama/` | The Android app |
-| `docs/protocol.md` | The wire protocol |
+| Where                                                    | What's in it                                                                        |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `crates/akiyama-core/`                                   | The protocol, the NAT, the DNS resolver and the session logic, shared by everything |
+| `crates/akiyama/src/aoa.rs`                              | Switching a phone to accessory mode, and its USB link                               |
+| `crates/akiyama/src/adb.rs`                              | The `adb` link, for Windows                                                         |
+| `crates/akiyama/src/tunnel.rs`                           | The client's TUN device, routes and DNS settings                                    |
+| `crates/akiyama-jni/`                                    | Lets the Android app use the NAT                                                    |
+| `android/app/src/main/kotlin/com/wonderhoylabs/akiyama/` | The Android app                                                                     |
+| `docs/protocol.md`                                       | The wire protocol                                                                   |
 
 The protocol exists in both Rust and Kotlin. Their tests check the same bytes, so change them together.
 
-Pushing a tag like `v0.1.0` builds everything and publishes a GitHub release. See
-[build.yml](.github/workflows/build.yml) for the signing secrets it can use. Without them, each release gets a throwaway
-key and has to be installed fresh instead of updating.
+Pushing a tag like `v0.1.0`, matching `VERSION`, builds everything and publishes a GitHub release through
+[ci.yml](.github/workflows/ci.yml). It signs the APK with the repository's `AKIYAMA_KEYSTORE_BASE64`, `AKIYAMA_KEYSTORE_PASSWORD`,
+`AKIYAMA_KEY_ALIAS` and `AKIYAMA_KEY_PASSWORD` secrets. Without them, each release gets a throwaway key and has to be installed
+fresh instead of updating.
 
 <details>
 <summary>Testing without a cable</summary>
@@ -469,10 +475,15 @@ Akiyama is a [Wonderhoy Labs](https://github.com/wonderhoy-labs) project, releas
 LLC, and USB-C is a trademark of the USB Implementers Forum.
 
 It stands on the work of these projects, each under its own permissive license:
-
 - [smoltcp](https://github.com/smoltcp-rs/smoltcp) (0BSD) and
   [netstack-smoltcp](https://github.com/automesh-network/netstack-smoltcp) (MIT or Apache 2.0), the userspace TCP/IP stack
 - [nusb](https://github.com/kevinmehall/nusb) (Apache 2.0 or MIT), for USB on computers
 - [rust-tun](https://github.com/meh/rust-tun) (WTFPL), for TUN devices
 - [Tokio](https://github.com/tokio-rs/tokio) (MIT), for everything asynchronous in Rust
 - [Jetpack Compose and AndroidX](https://developer.android.com/jetpack) (Apache 2.0), for the Android app
+- [Material Color Utilities](https://github.com/material-foundation/material-color-utilities) (Apache 2.0), which makes the
+  colours from the character's image colour
+
+Akiyama is named for Akiyama Mizuki of 25-ji, Nightcord de., from Project SEKAI COLORFUL STAGE! feat. Hatsune Miku. Wonderhoy Labs is a
+fan project, not affiliated with SEGA, Colorful Palette or Crypton Future Media, who own Project SEKAI and its characters.
+The Apache License doesn't cover the Akiyama name or logo.
