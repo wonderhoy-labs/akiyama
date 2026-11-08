@@ -7,9 +7,16 @@
 <p align="center">Full-duplex networking over a USB cable.</p>
 
 <p align="center">
-  <a href="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml"><img src="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml"
+    ><img src="https://github.com/wonderhoy-labs/akiyama/actions/workflows/ci.yml/badge.svg" alt="CI"></a
+  >
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache 2.0"></a>
-  <a href="#license-and-credits"><img src="https://img.shields.io/badge/Akiyama%20Mizuki-25--ji%2C%20Nightcord%20de.-DDAACC" alt="Named for Akiyama Mizuki of 25-ji, Nightcord de."></a>
+  <a href="#license-and-credits"
+    ><img
+      src="https://img.shields.io/badge/Akiyama%20Mizuki-25--ji%2C%20Nightcord%20de.-DDAACC"
+      alt="Named for Akiyama Mizuki of 25-ji, Nightcord de."
+    ></a
+  >
 </p>
 
 Akiyama shares a network connection between an Android phone and a computer over a USB cable. One end, the server, has the
