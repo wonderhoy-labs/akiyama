@@ -56,7 +56,7 @@ Download the APK and the command-line tool for your system from
 On Android, open the APK on your phone, or install it with `adb`:
 
 ```bash
-adb install -r akiyama-v0.1.1.apk
+adb install -r akiyama-v0.2.0.apk
 ```
 
 On macOS or Linux, unpack the tool and put it on your path. The Linux builds are static, so they run on any distribution.
@@ -146,6 +146,56 @@ You don't need to touch the cable. `akiyama server` and `akiyama client` can bot
 If it doesn't answer within a few seconds, they ask it to switch, and it behaves as if it had just been plugged in. The whole
 thing took 3 to 6 seconds in our tests.
 
+## Use it in your app
+
+Akiyama's protocol, NAT and DNS resolver are a Rust library, `akiyama-core`. The command-line tool is built on it, and
+so is the Android app's NAT. It runs on anything Tokio does, over any reliable, ordered byte stream: a USB accessory's
+bulk endpoints, TCP, a pipe, or a transport of your own. Add it by the release's tag:
+
+```toml
+[dependencies]
+akiyama-core = { git = "https://github.com/wonderhoy-labs/akiyama", tag = "v0.2.0" }
+```
+
+A server hands each link to `serve_link`. A USB link outlives the app on the other end, so it serves one session after
+another on the same link, giving each its own NAT, until `stop` resolves:
+
+```rust
+use akiyama_core::{nat::NatConfig, proto::DEFAULT_DNS, session::serve_link};
+use std::sync::Arc;
+
+let config = Arc::new(NatConfig::new(DEFAULT_DNS));
+serve_link(reader, writer, config, stop, |event| println!("{event:?}")).await?;
+```
+
+A client shakes hands, then connects its TUN device to the link. The device stays open across sessions, so a
+reconnection doesn't disturb apps:
+
+```rust
+use akiyama_core::session::{ClientDevice, Stats, client_handshake, run_client};
+use std::sync::Arc;
+
+let welcome = client_handshake(&mut reader, &mut writer).await?;
+let mut device = ClientDevice::new(tun, &welcome);
+let mut stop = std::pin::pin!(std::future::pending::<()>());
+run_client(&mut reader, &mut writer, &mut device, &welcome, Arc::new(Stats::default()), &mut stop).await?;
+```
+
+[`examples/in_process.rs`](crates/akiyama-core/examples/in_process.rs) runs both ends in one process and resolves a
+name through the server: `cargo run -p akiyama-core --example in_process`. `cargo doc -p akiyama-core --open`
+documents the rest.
+
+| Module    | What it has                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `session` | `serve_link` and its `SessionEvent`s, `client_handshake`, `run_client` and `ClientDevice`, and `pump` for packets |
+| `nat`     | `Nat`, one client's userspace TCP/IP stack, which ends its connections in ordinary sockets, and `NatConfig`       |
+| `dns`     | `DnsResolver`, the client's own caching resolver                                                                  |
+| `proto`   | The frames and the tunnel's addresses                                                                             |
+
+`akiyama-core` follows the protocol in [`docs/protocol.md`](docs/protocol.md), so it talks to every Akiyama build of
+the same protocol version, including the Android app. Below 1.0, a release that changes the API bumps the minor
+version and says what changed.
+
 ## What has been tested
 
 "Over USB" means a real cable between the Pixel and a computer, in accessory mode. The development TCP link is the rest of
@@ -169,6 +219,7 @@ same permissions over its own network devices. **Nobody has run it with `sudo` o
 | A restarted server on the same cable                                     | Works over USB on both. The new session replaces the old one                                                                                                                         |
 | Two and a half minutes at full speed both ways                           | About 4.6 GB on Linux, in one session, with no drops                                                                                                                                 |
 | `akiyama server --adb`                                                   | Works on the Mac, with DNS through the tunnel. This is the link Windows uses                                                                                                         |
+| `akiyama-core` on its own, in another program                            | Works on macOS: `examples/in_process.rs` runs a server and client over an in-memory pipe and resolves a name through the server's NAT                                                |
 | **Anything on Linux with a phone**                                       | **Never run.** The tool starts on Arch, but it hasn't been connected to anything                                                                                                     |
 | **Anything on Windows**                                                  | **Never run.** It only builds                                                                                                                                                        |
 | An Android phone with no other network                                   | Works on an emulator with airplane mode on and Wi-Fi and mobile data off, using `--adb`. Ping, DNS and HTTP work, and Android calls the VPN validated. **Not tried on a real phone** |
@@ -382,7 +433,7 @@ Adding `-Pakiyama.abis=arm64-v8a` builds the app faster, for one kind of device.
 
 The protocol exists in both Rust and Kotlin. Their tests check the same bytes, so change them together.
 
-Pushing a tag like `v0.1.0`, matching `VERSION`, builds everything and publishes a GitHub release through
+Pushing a tag like `v0.2.0`, matching `VERSION`, builds everything and publishes a GitHub release through
 [ci.yml](.github/workflows/ci.yml). It signs the APK with the repository's `AKIYAMA_KEYSTORE_BASE64`, `AKIYAMA_KEYSTORE_PASSWORD`,
 `AKIYAMA_KEY_ALIAS` and `AKIYAMA_KEY_PASSWORD` secrets. Without them, each release gets a throwaway key and has to be installed
 fresh instead of updating.

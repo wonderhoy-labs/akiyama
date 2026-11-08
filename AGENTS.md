@@ -12,13 +12,13 @@ Accessory, so either end can have the network. Windows is server-only and goes t
 
 ## Layout
 
-| Path                   | What                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| `crates/akiyama-core/` | Protocol, NAT, DNS resolver and session logic, shared by everything           |
-| `crates/akiyama/`      | The command-line tool: USB through `nusb`, adb on Windows, and the TUN device |
-| `crates/akiyama-jni/`  | Lets the Android app use the Rust NAT                                         |
-| `android/`             | The Android app, which builds `akiyama-jni` with cargo-ndk                    |
-| `docs/protocol.md`     | The wire protocol                                                             |
+| Path                   | What                                                                                            |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `crates/akiyama-core/` | Protocol, NAT, DNS resolver and session logic, shared by everything, and the library others use |
+| `crates/akiyama/`      | The command-line tool: USB through `nusb`, adb on Windows, and the TUN device                   |
+| `crates/akiyama-jni/`  | Lets the Android app use the Rust NAT                                                           |
+| `android/`             | The Android app, which builds `akiyama-jni` with cargo-ndk                                      |
+| `docs/protocol.md`     | The wire protocol                                                                               |
 
 ## Build, test and format
 
@@ -33,6 +33,9 @@ From the Mac, a static Linux build needs no C toolchain:
 
 ## Things to know
 
+- **`akiyama-core` is a library other programs use** by a Cargo git dependency on a release tag. Every public item
+  has a doc comment (`#![warn(missing_docs)]`), `examples/in_process.rs` has to keep working, and the README's "Use
+  it in your app" has to match the API. Changing the API bumps the minor version.
 - **The direction rides in the accessory's serial string.** `akiyama-server` makes the phone connect its VPN by
   itself; `akiyama-client` makes it ask for a tap on Share.
 - **Speed is good enough.** About 210 Mbit/s down and 360 up on the Pixel. Don't keep tuning it unasked.
