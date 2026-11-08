@@ -9,7 +9,9 @@ use std::io;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
+/// Opens every hello.
 pub const MAGIC: [u8; 4] = *b"AKIY";
+/// The protocol version. Both ends need the same one, and a server says goodbye to any other.
 pub const VERSION: u8 = 1;
 /// The IP MTU inside the tunnel. TCP ends at the server, and only the tunnel ever sees these
 /// packets, so they can be far bigger than on a real network. Each one costs about the same work
@@ -18,14 +20,20 @@ pub const DEFAULT_MTU: u16 = 16_000;
 
 /// The resolver address a client gives its system. It only exists inside the tunnel.
 pub const GATEWAY_V4: Ipv4Addr = Ipv4Addr::new(10, 233, 78, 1);
+/// The client's IPv4 address in the tunnel.
 pub const CLIENT_V4: Ipv4Addr = Ipv4Addr::new(10, 233, 78, 2);
 /// The source address of the client resolver's own queries. Nothing else sends from it, so its
 /// replies can be picked out of the tunnel without colliding with an app's ports.
 pub const RESOLVER_V4: Ipv4Addr = Ipv4Addr::new(10, 233, 78, 3);
+/// The length of the tunnel's IPv4 prefix.
 pub const PREFIX_V4: u8 = 24;
+/// The tunnel's IPv6 gateway, in a unique local prefix of Akiyama's own.
 pub const GATEWAY_V6: Ipv6Addr = Ipv6Addr::new(0xfd41, 0x6b69, 0x7961, 0, 0, 0, 0, 1);
+/// The client's IPv6 address in the tunnel.
 pub const CLIENT_V6: Ipv6Addr = Ipv6Addr::new(0xfd41, 0x6b69, 0x7961, 0, 0, 0, 0, 2);
+/// The length of the tunnel's IPv6 prefix.
 pub const PREFIX_V6: u8 = 64;
+/// Where a server sends its clients' DNS unless it's told otherwise.
 pub const DEFAULT_DNS: Ipv4Addr = Ipv4Addr::new(1, 1, 1, 1);
 
 const TYPE_HELLO: u8 = 1;
@@ -36,6 +44,7 @@ const TYPE_PONG: u8 = 5;
 const TYPE_BYE: u8 = 6;
 
 const HEADER_LEN: usize = 3;
+/// The session ID and the network's details.
 pub const WELCOME_LEN: usize = 8 + 2 + 4 + 4 + 1 + 16 + 16 + 1 + 4;
 /// The magic, the version and the session ID.
 pub const HELLO_LEN: usize = 4 + 1 + 8;
@@ -45,17 +54,26 @@ pub const HELLO_LEN: usize = 4 + 1 + 8;
 pub struct Welcome {
 	/// The session ID from the hello this answers.
 	pub session: u64,
+	/// The largest IP packet either end sends.
 	pub mtu: u16,
+	/// The client's IPv4 address.
 	pub client_v4: Ipv4Addr,
+	/// The client's IPv4 gateway, which is also where its operating system sends DNS.
 	pub gateway_v4: Ipv4Addr,
+	/// The length of the IPv4 prefix.
 	pub prefix_v4: u8,
+	/// The client's IPv6 address.
 	pub client_v6: Ipv6Addr,
+	/// The client's IPv6 gateway.
 	pub gateway_v6: Ipv6Addr,
+	/// The length of the IPv6 prefix.
 	pub prefix_v6: u8,
+	/// The DNS server the client's resolver asks, through the tunnel.
 	pub upstream_dns: Ipv4Addr,
 }
 
 impl Welcome {
+	/// The standard addresses, answering the hello for `session`, with DNS going to `upstream_dns`.
 	pub fn new(session: u64, mtu: u16, upstream_dns: Ipv4Addr) -> Self {
 		Welcome {
 			session,
@@ -74,8 +92,11 @@ impl Welcome {
 /// Why a link is ending.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ByeReason {
+	/// The peer is done.
 	Normal,
+	/// The peer speaks another version of the protocol.
 	VersionMismatch,
+	/// A reason this version doesn't know, by its code.
 	Unknown(u8),
 }
 
@@ -97,18 +118,26 @@ impl ByeReason {
 	}
 }
 
+/// One message on a link.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Frame {
 	/// A phone's app starting a session. The ID is random, and stays the same if it has to repeat
 	/// itself, which is how a repeat can be told apart from an app that restarted.
 	Hello {
+		/// The client's protocol version.
 		version: u8,
+		/// The session ID, which the welcome repeats.
 		session: u64,
 	},
+	/// The server's answer to a hello, with the network the client is joining.
 	Welcome(Welcome),
+	/// One IP packet, either way.
 	Packet(Bytes),
+	/// Asks for a pong with the same number. Akiyama sends the microseconds since the session started.
 	Ping(u64),
+	/// The answer to a ping.
 	Pong(u64),
+	/// Ends the session. The link may carry another one.
 	Bye(ByeReason),
 }
 

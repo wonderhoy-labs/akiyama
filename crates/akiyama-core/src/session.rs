@@ -26,7 +26,9 @@ const WRITE_BATCH_BYTES: usize = 128 * 1024;
 /// Counters for one phone, safe to read from anywhere.
 #[derive(Debug, Default)]
 pub struct Stats {
+	/// The bytes of IP packets sent over the link.
 	pub bytes_sent: AtomicU64,
+	/// The bytes of IP packets that arrived over the link.
 	pub bytes_received: AtomicU64,
 	/// The latest ping time in microseconds, or zero before the first reply.
 	pub rtt_micros: AtomicU32,
@@ -141,9 +143,13 @@ where
 }
 
 /// What's happening on a link, for whoever's reporting on it.
+#[derive(Debug)]
 pub enum SessionEvent {
+	/// A client said hello, and its session began.
 	Started,
+	/// A session ended, with its counters, and why if something failed.
 	Ended(Arc<Stats>, Option<String>),
+	/// A client said hello with another version of the protocol, and was told so.
 	Refused(String),
 }
 

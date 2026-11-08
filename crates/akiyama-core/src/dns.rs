@@ -59,6 +59,7 @@ struct CacheEntry {
 	expires: Instant,
 }
 
+/// A client's resolver. It sits in the path of every packet, both ways, and only touches DNS.
 pub struct DnsResolver {
 	gateway: Ipv4Addr,
 	source: Ipv4Addr,
@@ -75,6 +76,7 @@ impl DnsResolver {
 		DnsResolver { gateway, source, upstream, next_port: 1024, pending: HashMap::new(), cache: HashMap::new() }
 	}
 
+	/// Decides what happens to a packet the operating system is sending into the tunnel.
 	pub fn outgoing(&mut self, packet: &[u8], now: Instant) -> Outgoing {
 		let Some(udp) = Udp::parse(packet) else {
 			return Outgoing::Pass;
@@ -111,6 +113,7 @@ impl DnsResolver {
 		Outgoing::Query(build_udp(self.source, port, self.upstream, DNS_PORT, udp.payload))
 	}
 
+	/// Decides what happens to a packet that came out of the tunnel.
 	pub fn incoming(&mut self, packet: &[u8], now: Instant) -> Incoming {
 		let Some(udp) = Udp::parse(packet) else {
 			return Incoming::Pass;
