@@ -114,7 +114,6 @@ fun AkiyamaScreen(state: ScreenState, actions: ScreenActions) {
 			state.attached != null -> Attached(state.attached, state.askDismissed, actions)
 			else -> Unplugged(actions)
 		}
-		BrandFooter(modifier = Modifier.padding(top = 8.dp))
 	}
 }
 
