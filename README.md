@@ -56,7 +56,7 @@ Download the APK and the command-line tool for your system from
 On Android, open the APK on your phone, or install it with `adb`:
 
 ```bash
-adb install -r akiyama-v0.2.0.apk
+adb install -r akiyama-v0.2.1.apk
 ```
 
 On macOS or Linux, unpack the tool and put it on your path. The Linux builds are static, so they run on any distribution.
@@ -154,7 +154,7 @@ bulk endpoints, TCP, a pipe, or a transport of your own. Add it by the release's
 
 ```toml
 [dependencies]
-akiyama-core = { git = "https://github.com/wonderhoy-labs/akiyama", tag = "v0.2.0" }
+akiyama-core = { git = "https://github.com/wonderhoy-labs/akiyama", tag = "v0.2.1" }
 ```
 
 A server hands each link to `serve_link`. A USB link outlives the app on the other end, so it serves one session after
